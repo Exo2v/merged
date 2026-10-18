@@ -1,0 +1,46 @@
+name: release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v0.2.0-1.21.1)'
+        required: false
+        default: 'v0.2.0-1.21.1'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: gradle/actions/wrapper-validation@v6
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+      - run: chmod +x mod/fabric/gradlew
+      - name: Build Fabric 1.21.1 (remapped jar)
+        run: |
+          cd mod/fabric
+          ./gradlew build --info
+          ls -lh build/libs/
+      - name: Rename artifacts for release
+        run: |
+          mkdir -p release-assets
+          cp mod/fabric/build/libs/hyrulecraft-*.jar release-assets/ 2>/dev/null || cp mod/fabric/build/libs/*.jar release-assets/
+          cp hyrulecraft-1.21.1-release.zip release-assets/ 2>/dev/null || true
+          cp -r resourcepack/hyrulecraft_shaders release-assets/ 2>/dev/null || true
+          ls -lh release-assets/
+      - name: Create GitHub Release with jar (1-click)
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-assets/*.jar
+            release-assets/*.zip
+          generate_release_notes: true
+          prerelease: false
+          fail_on_unmatched_files: false
