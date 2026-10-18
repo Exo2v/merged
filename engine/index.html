@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>HYRULECRAFT — Minecraft × Ocarina of Time</title>
+<meta name="description" content="A playable merge of Minecraft's voxel sandbox and OoT's adventure. Z-target a creeper. Hookshot across a ravine. Mine the Deku Tree."/>
+<link rel="preconnect" href="https://unpkg.com">
+<style>
+  :root{
+    --mc-green:#5aaa5a; --mc-brown:#8b5a2b; --mc-grass:#567d46; --z-gold:#e8c75a; --z-blue:#3a6ea5; --z-red:#c0392b;
+    --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#9daab7; --line:#2a313a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family: ui-sans-system, -apple-system, Segoe UI, Roboto, Inter, sans-serif; overflow:hidden}
+  a{color:var(--z-gold)}
+  /* layout */
+  #gameWrap{position:fixed;inset:0;display:grid;grid-template-rows: 56px 1fr;grid-template-columns: 1fr 340px;}
+  header{grid-column:1 / -1;display:flex;align-items:center;gap:14px;padding:10px 14px;background:linear-gradient(180deg, #0f141a, #0d1117);border-bottom:1px solid var(--line);z-index:10}
+  header .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.04em}
+  header .brand b{font-size:16px}
+  header .brand i{font-style:normal;color:var(--muted);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  header .brand .logo{width:34px;height:34px;border-radius:8px;background:conic-gradient(from 0deg, var(--mc-green), var(--z-gold), var(--z-blue), var(--mc-green));display:grid;place-items:center;color:#0a0f14;font-weight:900}
+  header .controls{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .pill{border:1px solid var(--line);background:#0b1016;color:var(--ink);padding:6px 10px;border-radius:999px;font-size:12px;letter-spacing:.04em}
+  .btn{appearance:none;border:1px solid var(--line);background:#1a212b;color:var(--ink);padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+  .btn:hover{background:#222d3c}
+  .btn.primary{background:var(--z-gold);color:#1a1200;border-color:#d4b44a}
+  .btn.primary:hover{filter:brightness(1.05)}
+  #canvasHost{position:relative;background:radial-gradient(1200px 600px at 50% -10%, #1a2a3a 0%, #0d1117 55%);}
+  #c{width:100%;height:100%;display:block;outline:none}
+  /* HUD overlays inside canvasHost */
+  .hud{position:absolute;inset:0;pointer-events:none}
+  .hudTop{display:flex;justify-content:space-between;align-items:flex-start;padding:10px;gap:10px}
+  .hearts{display:flex;gap:4px;align-items:center}
+  .heart{width:18px;height:18px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+  .rupees{display:flex;align-items:center;gap:8px;background:rgba(10,15,20,.7);border:1px solid var(--line);padding:6px 10px;border-radius:999px;backdrop-filter: blur(6px)}
+  .rupees b{color:var(--z-gold)}
+  .crosshair{position:absolute;left:50%;top:50%;width:24px;height:24px;transform:translate(-50%,-50%);pointer-events:none}
+  .crosshair:before,.crosshair:after{content:"";position:absolute;background:rgba(255,255,255,.95);box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+  .crosshair:before{left:11px;top:4px;width:2px;height:16px}
+  .crosshair:after{left:4px;top:11px;width:16px;height:2px}
+  .crosshair.ztarget{filter:drop-shadow(0 0 6px var(--z-gold));}
+  .crosshair.ztarget:before,.crosshair.ztarget:after{background:var(--z-gold)}
+  .hotbar{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:6px;background:rgba(10,15,20,.72);border:1px solid var(--line);padding:6px;border-radius:14px;backdrop-filter: blur(8px)}
+  .slot{width:48px;height:48px;border-radius:10px;background:#0e141c;border:1px solid #26303b;display:grid;place-items:center;position:relative;overflow:hidden}
+  .slot.active{outline:2px solid var(--z-gold);background:#1a2330;box-shadow:0 0 12px rgba(232,199,90,.4)}
+  .slot small{position:absolute;right:4px;bottom:2px;font-size:10px;font-weight:800;background:rgba(0,0,0,.7);padding:1px 4px;border-radius:6px}
+  .slot .icon{font-size:22px; line-height:1}
+  .slot .label{position:absolute;left:4px;top:4px;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .prompt{position:absolute;left:50%;bottom:72px;transform:translateX(-50%);background:rgba(0,0,0,.65);border:1px solid var(--line);padding:8px 12px;border-radius:10px;font-size:13px;display:none;backdrop-filter: blur(6px)}
+  .prompt.show{display:block}
+  aside#side{border-left:1px solid var(--line);background:linear-gradient(180deg, #0f141a, #0d1117);display:flex;flex-direction:column;overflow:hidden}
+  .tabs{display:flex;border-bottom:1px solid var(--line)}
+  .tab{flex:1;padding:10px 8px;text-align:center;font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;background:transparent;color:var(--muted);border:none}
+  .tab.active{color:var(--z-gold);background:rgba(232,199,90,.08);box-shadow:inset 0 -2px 0 var(--z-gold)}
+  .pane{padding:14px;overflow:auto;flex:1;display:none}
+  .pane.active{display:block}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+  .card h3{margin:0 0 6px 0;font-size:14px}
+  .card p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+  .kv{display:grid;grid-template-columns: 1fr auto;gap:8px;font-size:13px;margin-top:8px}
+  .kv i{color:var(--muted);font-style:normal}
+  .kv b{font-weight:800}
+  .mergeList{display:grid;gap:8px}
+  .mergeRow{display:flex;gap:10px;align-items:center;background:#0e141c;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .mergeRow .from,.mergeRow .to{flex:1}
+  .mergeRow .arrow{opacity:.6}
+  .compat{font-size:11px;color:#7fb48a;background:rgba(95,170,90,.12);border:1px solid rgba(95,170,90,.3);padding:3px 6px;border-radius:999px;font-weight:700}
+  pre{margin:0;background:#0a0f14;border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-size:12px;line-height:1.5}
+  .navi{position:absolute;left:12px;bottom:12px;background:rgba(10,15,20,.82);border:1px solid var(--line);padding:10px 12px;border-radius:12px;max-width:420px;display:flex;gap:10px;align-items:flex-start;backdrop-filter: blur(8px)}
+  .navi .orb{width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 30% 30%, #fff, #7dd3fc 30%, #0ea5e9 60%, #0a3a5a 100%);box-shadow:0 0 12px rgba(125,211,252,.9), 0 0 24px rgba(14,165,233,.6);animation: float 2s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+  .navi p{margin:0;font-size:13px;line-height:1.4}
+  .navi p b{color:var(--z-gold)}
+  .overlay{position:absolute;inset:0;background:rgba(5,8,12,.72);backdrop-filter: blur(10px);display:grid;place-items:center;z-index:5}
+  .sheet{background:linear-gradient(180deg, #111821, #0d1218);border:1px solid var(--line);border-radius:16px;max-width:760px;width:92%;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .sheet h1{margin:0 0 6px 0;font-size:22px}
+  .sheet p{margin:0;color:var(--muted);line-height:1.6}
+  .grid2{display:grid;grid-template-columns: 1fr 1fr;gap:12px;margin-top:12px}
+  .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, monospace;background:#0a0f14;border:1px solid var(--line);border-bottom-width:2px;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:800}
+  .tag{display:inline-flex;align-items:center;gap:6px;background:rgba(232,199,90,.12);border:1px solid rgba(232,199,90,.35);color:var(--z-gold);padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+  @media (max-width: 900px){
+    #gameWrap{grid-template-columns: 1fr;grid-template-rows:56px 1fr auto}
+    aside#side{grid-column:1 / -1;max-height:42vh}
+  }
+</style>
+</head>
+<body>
+<div id="gameWrap">
+  <header>
+    <div class="brand">
+      <div class="logo">◈</div>
+      <div>
+        <b>HYRULECRAFT</b> <i>— Minecraft × Ocarina of Time</i><br/>
+        <span style="font-size:11px;color:var(--muted);font-weight:600">Decomp merge prototype · no ROM/JAR required</span>
+      </div>
+    </div>
+    <div class="controls">
+      <span class="pill" id="modePill">● Minecraft Mode — First Person</span>
+      <button class="btn" id="resetBtn">Respawn</button>
+      <button class="btn primary" id="playBtn">▶ Click to Play</button>
+    </div>
+  </header>
+
+  <div id="canvasHost">
+    <canvas id="c"></canvas>
+
+    <div class="hud">
+      <div class="hudTop">
+        <div class="hearts" id="hearts"></div>
+        <div class="rupees"><span style="font-size:16px">⬢</span> <b id="rupeeCount">24</b> <span style="color:var(--muted);font-size:12px;font-weight:700">RUPEES</span> <span style="opacity:.4">|</span> <span style="color:var(--muted);font-size:12px">⛏</span> <b id="blockCount">0</b></div>
+      </div>
+
+      <div class="crosshair" id="crosshair"></div>
+
+      <div class="hotbar" id="hotbar"></div>
+
+      <div class="prompt" id="prompt">Press <span class="kbd">Z</span> to Z-target · <span class="kbd">R</span> Hookshot · <span class="kbd">F</span> Sword</div>
+
+      <div class="navi" id="navi">
+        <div class="orb"></div>
+        <div>
+          <p><b>Navi:</b> <span id="naviText">Hey! Listen! This Hyrule is made of blocks — you can <b>mine</b> them! Try left-click on the grass near the Deku Tree.</span></p>
+          <div style="margin-top:6px;display:flex;gap:6px">
+            <span class="tag">💡 Build solves puzzles</span>
+            <span class="tag" style="border-color:#58a6ff;color:#93c5fd;background:rgba(88,166,255,.12)">🎯 Z-target = lock</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="overlay" id="startOverlay">
+        <div class="sheet">
+          <div class="tag">Playable merge · Three.js · Clean-room</div>
+          <h1>Mine the Deku Tree. Hookshot the ravine. Z-target the Creeper.</h1>
+          <p>This is a <b>design prototype</b> for a real decomp merge. It runs entirely in your browser — no ROM, no JAR, no assets from either game. It shows what it <i>feels</i> like when OoT's actor/collision/camera system drives a Minecraft voxel world.</p>
+          <div class="grid2">
+            <div class="card" style="margin:0">
+              <h3>⛏ Minecraft verbs</h3>
+              <p><span class="kbd">LMB</span> break · <span class="kbd">RMB</span> place · <span class="kbd">Q/E</span> hotbar · <span class="kbd">B</span> bomb · <span class="kbd">Scroll</span> zoom</p>
+              <div class="kv"><i>Blocks</i><b>voxel Hyrule Field + Deku dungeon</b></div>
+              <div class="kv"><i>Redstone</i><b>powers OoT switches</b></div>
+            </div>
+            <div class="card" style="margin:0">
+              <h3>⚔ OoT verbs</h3>
+              <p><span class="kbd">Z</span> Z-target · <span class="kbd">F</span> sword · <span class="kbd">R</span> hookshot · <span class="kbd">Shift</span> roll</p>
+              <div class="kv"><i>Actors</i><b>chests, octoroks, skulltulas</b></div>
+              <div class="kv"><i>Camera</i><b>OoT camera wins when locked</b></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:14px">
+            <button class="btn primary" id="startBtn2" style="flex:1">▶ Enter Hyrulecraft</button>
+            <a class="btn" href="../docs/architecture.md" target="_blank" style="text-decoration:none;display:grid;place-items:center">Read merge docs</a>
+          </div>
+          <p style="margin-top:10px;font-size:11px">Tip: Click the canvas to lock mouse. Press <span class="kbd">Esc</span> to unlock. On mobile, drag to look, tap to break.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <aside id="side">
+    <div class="tabs">
+      <button class="tab active" data-tab="play">Play</button>
+      <button class="tab" data-tab="merge">Merge Map</button>
+      <button class="tab" data-tab="spec">Spec</button>
+    </div>
+
+    <div class="pane active" id="pane-play">
+      <div class="card">
+        <h3>How to experience the merge</h3>
+        <p>Do these 3 micro-quests — each proves a different merged system.</p>
+        <div style="margin-top:10px;display:grid;gap:8px">
+          <label style="display:flex;gap:8px;align-items:center;background:#0e141c;border:1px solid var(--line);padding:8px 10px;border-radius:10px"><input type="checkbox" id="q1"> <span><b>1) Mine the Deku roots</b> — break 3 blocks at the tree's base (south). Chest appears.</span></label>
+          <label style="display:flex;gap:8px;align-items:center;background:#0e141c;border:1px solid var(--line);padding:8px 10px;border-radius:10px"><input type="checkbox" id="q2"> <span><b>2) Z-target & defeat</b> — press <span class="kbd">Z</span> near the Octorok in the pond, then <span class="kbd">F</span>.</span></label>
+          <label style="display:flex;gap:8px;align-items:center;background:#0e141c;border:1px solid var(--line);padding:8px 10px;border-radius:10px"><input type="checkbox" id="q3"> <span><b>3) Hookshot the ravine</b> — place a <span class="kbd">chain</span> block (slot 6), then <span class="kbd">R</span> to pull. Build with place!</span></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>LIVE: Merged systems</h3>
+        <div class="kv"><i>View</i><b id="viewMode">First-person</b></div>
+        <div class="kv"><i>Z-target</i><b id="ztargetInfo">none</b></div>
+        <div class="kv"><i>Looking at</i><b id="lookInfo">air</b></div>
+        <div class="kv"><i>FPS</i><b id="fps">—</b></div>
+        <div class="kv"><i>Pos</i><b id="posInfo">0,0,0</b></div>
+      </div>
+
+      <div class="card">
+        <h3>Controls</h3>
+        <pre>WASD move · Mouse look · Space jump · Shift sprint/roll
+LMB break · RMB place · Q/E hotbar · 1-8 select
+Z Z-target · F sword · R hookshot · B bomb · E inventory
+Scroll zoom (first↔third person) · M map · H help
+On-screen buttons work if pointer lock blocked</pre>
+      </div>
+
+      <div class="card">
+        <h3>What you're seeing</h3>
+        <p><b>Voxel Hyrule Field</b> (2048 logic, 60×60 demo) with OoT structures as voxel actors: Deku Tree stump, Castle wall, Kakariko houses, ravine + chain targets, pond with Octorok. Fog + Lod are Minecraft; sky color + sun position are OoT's EnvironmentContext.</p>
+      </div>
+    </div>
+
+    <div class="pane" id="pane-merge">
+      <div class="card">
+        <h3>Actor ↔ Entity mapping</h3>
+        <p>This is what <code>tools/mapping/analyze.py</code> generates and <code>src/bridge/</code> consumes.</p>
+      </div>
+      <div class="mergeList" id="mergeList"></div>
+      <div class="card">
+        <h3>Block ↔ Collision</h3>
+        <pre id="blockMapPre">grass_block → GROUND (En_Kusa)
+stone → GROUND (cracked = breakable)
+lava → LAVA (Goron Tunic)
+water → WATER (Iron Boots)
+obsidian → UNBREAKABLE (Boss Door)
+chain → HOOKSHOT_PULLS_PLAYER
+redstone_block → SWCH flag
+chest → En_Box (TREASURE)
+web → SOFT (sword/fire)
+sculk_sensor → REACT_TO_LENS</pre>
+      </div>
+    </div>
+
+    <div class="pane" id="pane-spec">
+      <div class="card">
+        <h3>Inventory — merged</h3>
+        <p>8 hotbar (C-buttons + D-pad), shield offhand, tunics as armor. Rupees = Emeralds.</p>
+        <pre>Hotbar: [Pick][Sword][Bow][Bomb][Chain][Dirt][Stone][Ocarina]
+Shop: Deku Scrub = villager trade emerald→hookshot
+Chest = En_Box with TREASURE flag
+Song of Time = rewind 5 blocks</pre>
+      </div>
+      <div class="card">
+        <h3>Technical</h3>
+        <p>Prototype: Three.js + naive voxels. Real: <code>liboot.a</code> (OoT GCC) + JNI Minecraft + shared <code>MergedState</code>. See <a href="../docs/architecture.md" target="_blank">architecture.md</a>.</p>
+        <pre>Tick: Input → MC block ticks → OoT Actor_Update
+→ merged collision → Camera_Update → Render</pre>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Three + helpers via CDN -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+// DOM
+const canvas = document.getElementById('c');
+const heartsEl = document.getElementById('hearts');
+const rupeeCountEl = document.getElementById('rupeeCount');
+const blockCountEl = document.getElementById('blockCount');
+const hotbarEl = document.getElementById('hotbar');
+const crosshairEl = document.getElementById('crosshair');
+const promptEl = document.getElementById('prompt');
+const naviTextEl = document.getElementById('naviText');
+const modePill = document.getElementById('modePill');
+const viewModeEl = document.getElementById('viewMode');
+const ztargetInfoEl = document.getElementById('ztargetInfo');
+const lookInfoEl = document.getElementById('lookInfo');
+const fpsEl = document.getElementById('fps');
+const posInfoEl = document.getElementById('posInfo');
+const mergeListEl = document.getElementById('mergeList');
+
+// state
+let health = 10, maxHealth = 10;
+let rupees = 24;
+let blocksMined = 0;
+let selectedSlot = 0;
+let promptTimer = 0;
+let isLocked = false;
+let thirdPerson = 0; // 0 first, 1 third
+let cameraLerp = 0;
+let ztarget = null;
+let inventoryOpen = false;
+
+// inventory spec — merged 8
+const HOTBAR = [
+  { id:'pickaxe', icon:'⛏', label:'Pick', color:'#9ca3af', key:'1', block:null },
+  { id:'sword', icon:'⚔', label:'Sword', color:'#e5e7eb', key:'2', block:null },
+  { id:'bow', icon:'🏹', label:'Bow', color:'#f59e0b', key:'3', block:null },
+  { id:'bomb', icon:'💣', label:'Bomb', color:'#ef4444', key:'4', block:null },
+  { id:'hookshot', icon:'🪝', label:'Hook', color:'#60a5fa', key:'5', block:null },
+  { id:'chain', icon:'⛓', label:'Chain', color:'#9ca3af', key:'6', block:'chain' },
+  { id:'dirt', icon:'🟫', label:'Dirt', color:'#a16207', key:'7', block:'dirt' },
+  { id:'ocarina', icon:'🎵', label:'Ocarina', color:'#a7f3d0', key:'8', block:null },
+];
+const BLOCK_TYPES = {
+  grass: { color: 0x5aaa5a, top: 0x6fbf6f, label:'Grass' },
+  dirt: { color: 0x8b5a2b, label:'Dirt' },
+  stone: { color: 0x9aa0a6, label:'Stone' },
+  stone_cracked: { color: 0x9aa0a6, label:'Stone*', cracked:true },
+  log: { color: 0x6b4e2e, label:'Log' },
+  leaves: { color: 0x2d6a4f, label:'Leaves' },
+  planks: { color: 0xc19a6b, label:'Planks' },
+  chain: { color: 0x7a8288, label:'Chain', hook:true },
+  chest: { color: 0xd4a017, label:'Chest', actor:true },
+  obsidian: { color: 0x2b2f3a, label:'Obsidian', unbreakable:true },
+  lava: { color: 0xef4444, label:'Lava', damage:true },
+  water: { color: 0x3a8de0, label:'Water' },
+  redstone: { color: 0xdc2626, label:'Redstone', swch:true },
+};
+
+// Three setup
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x93b8d6, 30, 85);
+scene.background = new THREE.Color(0x87b6e3);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const camera = new THREE.PerspectiveCamera(72, 1, 0.1, 300);
+camera.position.set(6, 5, 10);
+
+const ambient = new THREE.HemisphereLight(0xddeeff, 0x4a5a3a, 0.9);
+scene.add(ambient);
+const sun = new THREE.DirectionalLight(0xfff7e0, 1.1);
+sun.position.set(30, 40, 20);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.near = 0.5; sun.shadow.camera.far = 120;
+sun.shadow.camera.left = -40; sun.shadow.camera.right=40; sun.shadow.camera.top=40; sun.shadow.camera.bottom=-40;
+scene.add(sun);
+
+// ground plane color
+const worldGroup = new THREE.Group();
+scene.add(worldGroup);
+
+// voxels: map key "x,y,z" -> {type, mesh}
+const voxels = new Map();
+const voxelMeshes = []; // for raycast list
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2(0,0);
+
+function key(x,y,z){ return `${x},${y},${z}` }
+
+function addVoxel(x,y,z, type){
+  if(voxels.has(key(x,y,z))) return;
+  const def = BLOCK_TYPES[type];
+  const geo = new THREE.BoxGeometry(1,1,1);
+  // tweak material per type
+  let mat;
+  if(type==='chain'){
+    mat = new THREE.MeshStandardMaterial({ color: def.color, metalness:0.6, roughness:0.4 });
+  } else if(type==='lava'){
+    mat = new THREE.MeshStandardMaterial({ color:def.color, emissive:0x441100, emissiveIntensity:0.6, roughness:0.9 });
+  } else if(type==='water'){
+    mat = new THREE.MeshStandardMaterial({ color:def.color, transparent:true, opacity:0.7, roughness:0.2, metalness:0.1 });
+  } else if(def.cracked){
+    mat = new THREE.MeshStandardMaterial({ color:def.color, roughness:0.9 });
+  } else if(type==='grass'){
+    mat = new THREE.MeshStandardMaterial({ color:def.top||def.color, roughness:0.95 });
+  } else {
+    mat = new THREE.MeshStandardMaterial({ color:def.color, roughness:0.85 });
+  }
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(x+0.5, y+0.5, z+0.5);
+  mesh.castShadow = (type!=='water');
+  mesh.receiveShadow = true;
+  mesh.userData = { x,y,z,type, def };
+  // chest has emissive lid
+  if(type==='chest'){
+    const lid = new THREE.Mesh(new THREE.BoxGeometry(1,0.35,1), new THREE.MeshStandardMaterial({color:0xf6d365}));
+    lid.position.set(0,0.32,0);
+    mesh.add(lid);
+    mesh.userData.isChest = true;
+    mesh.userData.opened = false;
+  }
+  // cracked hint
+  if(def.cracked){
+    const edge = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({color:0x000000, transparent:true, opacity:0.18}));
+    mesh.add(edge);
+  }
+  // chain visual
+  if(type==='chain'){
+    const v = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,1,6), new THREE.MeshStandardMaterial({color:0xd1d5db, metalness:0.8, roughness:0.3}));
+    mesh.add(v);
+  }
+  worldGroup.add(mesh);
+  voxels.set(key(x,y,z), {type, mesh});
+  voxelMeshes.push(mesh);
+}
+
+function removeVoxel(x,y,z){
+  const k = key(x,y,z);
+  const entry = voxels.get(k);
+  if(!entry) return false;
+  if(BLOCK_TYPES[entry.type]?.unbreakable) return false;
+  worldGroup.remove(entry.mesh);
+  entry.mesh.geometry.dispose();
+  // remove from list
+  const idx = voxelMeshes.indexOf(entry.mesh);
+  if(idx>=0) voxelMeshes.splice(idx,1);
+  voxels.delete(k);
+  blocksMined++; blockCountEl.textContent = blocksMined;
+  // chance drop rupee
+  if(Math.random()<0.18){ rupees++; rupeeCountEl.textContent=rupees; spawnRupeePop(x,y,z); }
+  // quest 1
+  checkQuests();
+  // hook targets may be destroyed — update prompt
+  return true;
+}
+
+function hasVoxel(x,y,z){ return voxels.has(key(x,y,z)); }
+
+// particles
+const pops = [];
+function spawnRupeePop(x,y,z){
+  const spr = document.createElement('div');
+  spr.textContent = '+1 ⬢';
+  spr.style.position='absolute';
+  spr.style.left='50%'; spr.style.top='50%';
+  spr.style.color='#e8c75a'; spr.style.fontWeight='800'; spr.style.fontSize='13px';
+  spr.style.textShadow='0 1px 2px rgba(0,0,0,.8)';
+  spr.style.pointerEvents='none';
+  spr.style.transition='all 700ms ease-out';
+  document.getElementById('canvasHost').appendChild(spr);
+  // project 3d to screen later — simple
+  let life=0;
+  pops.push({el:spr, life, x,y,z, vy:1.2});
+}
+
+// world gen
+function genWorld(){
+  // base terrain 30x30
+  const size = 30; const half = Math.floor(size/2);
+  for(let x=-half; x<half; x++){
+    for(let z=-half; z<half; z++){
+      const dx=x, dz=z;
+      // pseudo noise via sin
+      const h = Math.floor( 2 + Math.sin(x*0.22)*1.1 + Math.cos(z*0.28)*1.1 + Math.sin((x+z)*0.15)*0.7 );
+      // ground layers
+      for(let y=0; y<h; y++){
+        const type = (y===h-1) ? 'grass' : (y>=h-2 ? 'dirt' : 'stone');
+        addVoxel(x,y,z, type);
+      }
+      // add grass variety: cracked stone hints inside ravine
+      if( (x===6 || x===7) && z> -4 && z<8 ){
+        // ravine gap — carve
+        for(let y=0;y<4;y++) voxels.has(key(x,y,z)) && removeVoxel(x,y,z);
+      }
+    }
+  }
+  // Ravine floor water
+  for(let z=-2; z<6; z++) addVoxel(6, -1, z, 'water'), addVoxel(7, -1, z, 'water');
+
+  // Deku Tree stump around (0,0,14)
+  {
+    const cx=0, cz=14;
+    // trunk hollow
+    for(let y=2;y<6;y++){
+      for(let dx=-2; dx<=2; dx++) for(let dz=-2; dz<=2; dz++){
+        if(Math.abs(dx)===2 || Math.abs(dz)===2) addVoxel(cx+dx,y,cz+dz,'log');
+      }
+    }
+    for(let dx=-3;dx<=3;dx++) for(let dz=-3;dz<=3;dz++){
+      if(Math.max(Math.abs(dx),Math.abs(dz))<=2) addVoxel(cx+dx,5,cz+dz,'leaves');
+      if(Math.max(Math.abs(dx),Math.abs(dz))===3 && Math.random()>0.4) addVoxel(cx+dx,4,cz+dz,'leaves');
+    }
+    // roots -> breakable stone* (puzzle)
+    addVoxel(cx+1,1,cz+2,'stone_cracked');
+    addVoxel(cx-1,1,cz+2,'stone_cracked');
+    addVoxel(cx,1,cz+3,'stone_cracked');
+    addVoxel(cx,1,cz+1,'planks'); // hidden chest platform behind roots
+    addVoxel(cx,2,cz+1,'chest');
+    // sign
+    addVoxel(cx+3,2,cz,'planks');
+  }
+  // Castle wall at -12,-10
+  {
+    const cx=-12, cz=-12;
+    for(let x=-6;x<=6;x++) for(let y=2;y<6;y++) addVoxel(cx+x,y,cz,'stone');
+    for(let x=-6;x<=6;x++) for(let y=6;y<7;y++) if(x%2===0) addVoxel(cx+x,y,cz,'stone'); // crenellations
+    // gate
+    for(let y=2;y<4;y++) { removeVoxel(cx,y,cz); }
+    addVoxel(cx,2,cz-1,'redstone'); // pressure switch
+    addVoxel(cx+2,2,cz-1,'obsidian'); // unbreakable boss door deco
+    addVoxel(cx-2,2,cz-1,'chain'); // hook target
+  }
+  // Kakariko houses (2 houses)
+  {
+    const houses = [[-6,2,-2],[ -2,2,-6]];
+    houses.forEach(([hx,hy,hz])=>{
+      for(let x=0;x<4;x++) for(let z=0;z<4;z++) for(let y=2;y<5;y++){
+        if(x===0||x===3||z===0||z===3) addVoxel(hx+x,y,hz+z,'planks');
+      }
+      for(let x=0;x<4;x++) for(let z=0;z<4;z++) addVoxel(hx+x,5,hz+z,'log'); // roof
+      addVoxel(hx+1,2,hz+1,'chest');
+      addVoxel(hx+1,3,hz+1,'redstone');
+    });
+  }
+  // Pond with Octorok at (8,2,10)
+  // already water ravine, add pond rim
+  for(let x=6;x<11;x++) for(let z=8;z<13;z++){
+    if(x===6||x===10||z===8||z===12) addVoxel(x,2,z,'stone');
+  }
+  // Chain targets over ravine
+  addVoxel(6,5,1,'chain');
+  addVoxel(7,5,1,'chain');
+  addVoxel(6,5,-1,'chain');
+  addVoxel(7,5,-1,'chain');
+  addVoxel(6,6,3,'chain'); // tall
+
+  // Random stone cracked for exploration
+  for(let i=0;i<10;i++){
+    const x = Math.floor(Math.random()*20-10);
+    const z = Math.floor(Math.random()*20-10);
+    if(!hasVoxel(x,2,z) && Math.random()>0.6) addVoxel(x,2,z,'stone_cracked');
+  }
+}
+genWorld();
+
+// Entities — OoT-style actors as sprites/meshes
+const actors = [];
+function addActor(o){
+  actors.push(o); scene.add(o.mesh);
+}
+
+// Octorok
+let octorok;
+{
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12), new THREE.MeshStandardMaterial({color:0x2ec4b6, roughness:0.6}));
+  body.scale.set(1,0.7,1);
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10), new THREE.MeshStandardMaterial({color:0x0a0a0a}));
+  eye.position.set(0,0.15,0.35);
+  const eye2 = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), new THREE.MeshStandardMaterial({color:0xf59e0b}));
+  eye2.position.set(0,0.16,0.42);
+  g.add(body, eye, eye2);
+  g.position.set(8.5, 1.6, 10.5);
+  g.castShadow = true;
+  octorok = { id:'octorok', mesh:g, hp:3, maxHp:3, hostility:true, attention:true, radius:0.9, baseY:1.6 };
+  addActor(octorok);
+}
+
+// Navi fairy (follows player)
+const navi = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12,12), new THREE.MeshStandardMaterial({color:0x7dd3fc, emissive:0x0ea5e9, emissiveIntensity:0.9}));
+navi.position.set(1, 3.5, 2);
+scene.add(navi);
+
+// Gold Skulltula
+const skulltulas = [];
+for(let i=0;i<2;i++){
+  const grp = new THREE.Group();
+  const b = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10,8), new THREE.MeshStandardMaterial({color:0xd4a017}));
+  b.scale.set(1,0.7,1);
+  for(let leg=0; leg<4; leg++){
+    const l = new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.5,4), new THREE.MeshStandardMaterial({color:0x3a2e1f}));
+    l.position.set(Math.cos(leg*Math.PI/2)*0.25, -0.1, Math.sin(leg*Math.PI/2)*0.25);
+    l.rotation.z = Math.cos(leg*Math.PI/2)*0.8;
+    grp.add(l);
+  }
+  grp.add(b);
+  grp.position.set( -4 + i*12 , 3.2 , 6 + i*2 );
+  grp.userData = { bob: Math.random()*6 };
+  skulltulas.push({mesh:grp, attention:true, hostility:false}); scene.add(grp);
+}
+
+// simple Deku scrub merchant near spawn
+const scrub = new THREE.Group();
+{
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.6,0.7,8), new THREE.MeshStandardMaterial({color:0x5a7a3a}));
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12,10), new THREE.MeshStandardMaterial({color:0x8ec07c}));
+  head.position.y=0.55;
+  const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.2,0.4,6), new THREE.MeshStandardMaterial({color:0x2d6a4f}));
+  leaf.position.y=0.9;
+  scrub.add(base, head, leaf);
+  scrub.position.set(2, 2.1, -1);
+  scene.add(scrub);
+}
+
+// player
+const player = {
+  pos: new THREE.Vector3(0, 3.5, 0),
+  vel: new THREE.Vector3(0,0,0),
+  yaw: 0, pitch: 0,
+  onGround:false,
+  height: 1.8,
+  speed: 4.2,
+  sprint: 6.2,
+  hp:10,
+};
+
+const playerColliderSize = new THREE.Vector3(0.6, 1.8, 0.6);
+
+// pointer + input
+const keys = {};
+window.addEventListener('keydown', e=>{
+  const k=e.key.toLowerCase();
+  keys[k]=true;
+  if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
+  if(k==='z') toggleZTarget();
+  if(k==='f') doSword();
+  if(k==='r') doHookshot();
+  if(k==='b') placeBomb();
+  if(k==='e') toggleInventory();
+  if(k==='q') cycleSlot(-1);
+  if(k==='e' && e.ctrlKey){} // ignore
+  if(k==='q' || k==='e') { if(!inventoryOpen) { if(k==='q') cycleSlot(-1); if(k==='e' && !e.shiftKey) {/* inventory */} } }
+  if(['1','2','3','4','5','6','7','8'].includes(k)) selectSlot(parseInt(k)-1);
+  if(k==='h') showHelp();
+});
+
+window.addEventListener('keyup', e=> keys[e.key.toLowerCase()]=false);
+
+// mouse look
+let mouseDX=0, mouseDY=0;
+canvas.addEventListener('click', ()=>{
+  if(inventoryOpen || document.getElementById('startOverlay').style.display!=='none') return;
+  canvas.requestPointerLock?.();
+});
+document.addEventListener('pointerlockchange', ()=>{
+  isLocked = document.pointerLockElement===canvas;
+  crosshairEl.style.display = isLocked ? 'block':'block';
+  if(isLocked) { document.getElementById('startOverlay').style.display='none'; }
+});
+document.addEventListener('mousemove', e=>{
+  if(isLocked){
+    mouseDX += e.movementX; mouseDY += e.movementY;
+  }
+});
+
+// touch for mobile
+let touchLook = false, lastTx=0, lastTy=0;
+canvas.addEventListener('touchstart', e=>{
+  if(e.touches.length===1){ touchLook=true; lastTx=e.touches[0].clientX; lastTy=e.touches[0].clientY; }
+});
+canvas.addEventListener('touchmove', e=>{
+  if(!touchLook) return;
+  const t=e.touches[0];
+  mouseDX += (t.clientX-lastTx)*0.6; mouseDY += (t.clientY-lastTy)*0.6;
+  lastTx=t.clientX; lastTy=t.clientY;
+  e.preventDefault();
+},{passive:false});
+canvas.addEventListener('touchend', ()=> touchLook=false);
+canvas.addEventListener('contextmenu', e=> e.preventDefault());
+
+// wheel zoom (first<->third)
+canvas.addEventListener('wheel', e=>{
+  thirdPerson = Math.max(0, Math.min(1, thirdPerson + e.deltaY*0.0015));
+  updateModePill();
+  e.preventDefault();
+},{passive:false});
+
+// hotbar clicks
+function renderHotbar(){
+  hotbarEl.innerHTML='';
+  HOTBAR.forEach((it,i)=>{
+    const d=document.createElement('div');
+    d.className='slot'+(i===selectedSlot?' active':'');
+    d.innerHTML=`<div class="label">${it.key}</div><div class="icon">${it.icon}</div><small>${it.label}</small>`;
+    d.onclick=()=> selectSlot(i);
+    hotbarEl.appendChild(d);
+  });
+}
+function selectSlot(i){ selectedSlot=i%HOTBAR.length; renderHotbar(); showPrompt(HOTBAR[selectedSlot].label + ' ready'); }
+function cycleSlot(dir){ selectSlot((selectedSlot+dir+HOTBAR.length)%HOTBAR.length); }
+renderHotbar();
+
+// hearts
+function renderHearts(){
+  heartsEl.innerHTML='';
+  for(let i=0;i<maxHealth;i++){
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox','0 0 24 24');
+    svg.setAttribute('class','heart');
+    svg.innerHTML = `<path d="${i < health ? 'M12 21s-6.5-4.2-8.8-8.2C0.7 8.2 2.8 3 8.1 3c2.5 0 3.9 1.4 3.9 1.4S13.4 3 15.9 3c5.3 0 7.4 5.2 4.9 9.8C18.5 16.8 12 21 12 21z' : 'M12 21s-6.5-4.2-8.8-8.2C0.7 8.2 2.8 3 8.1 3c2.5 0 3.9 1.4 3.9 1.4S13.4 3 15.9 3c5.3 0 7.4 5.2 4.9 9.8C18.5 16.8 12 21 12 21z'}" fill="${i<health?'#e63946':'#2a313a'}" stroke="#10151b" stroke-width="1"/>`;
+    heartsEl.appendChild(svg);
+  }
+}
+renderHearts();
+
+// helpers
+function showPrompt(t, ms=1800){
+  promptEl.textContent=t; promptEl.classList.add('show');
+  promptTimer = ms;
+}
+function showHelp(){ showPrompt('WASD move · Mouse look · LMB break · RMB place · Z Z-target · F sword · R hookshot · B bomb · Q/E hotbar · Scroll zoom', 4000); }
+
+// voxel collision helpers — AABB vs voxels
+function isSolidAt(x,y,z){
+  // check voxel map
+  if(voxels.has(key(x,y,z))) {
+    const tp = voxels.get(key(x,y,z)).type;
+    if(tp==='water') return false; // swim
+    if(tp==='lava') return false; // but damage
+    return true;
+  }
+  return false;
+}
+function getGroundHeight(x,z){
+  for(let y=10; y>=0; y--) if(isSolidAt(Math.floor(x), y, Math.floor(z))) return y+1;
+  return 0;
+}
+
+function collideAndSlide(pos, vel, dt){
+  // very simple: try move X, then Z, then Y with step
+  const next = pos.clone().add(vel.clone().multiplyScalar(dt));
+  // X
+  if(vel.x!==0){
+    const nx = next.x;
+    const minY = pos.y - 0.1, maxY = pos.y + player.height;
+    // check 4 corners at foot+head
+    let blocked=false;
+    for(let yy of [minY+0.1, minY+0.9, maxY-0.1]){
+      for(let zz of [-0.25,0.25]){
+        if(isSolidAt(Math.floor(nx + (vel.x>0? 0.3 : -0.3)), Math.floor(yy), Math.floor(pos.z+zz))) blocked=true;
+      }
+    }
+    if(!blocked) pos.x = nx; else vel.x=0;
+  }
+  if(vel.z!==0){
+    let nz = next.z;
+    let blocked=false;
+    for(let yy of [pos.y+0.1, pos.y+0.9, pos.y+player.height-0.1]){
+      for(let xx of [-0.25,0.25]){
+        if(isSolidAt(Math.floor(pos.x+xx), Math.floor(yy), Math.floor(nz + (vel.z>0? 0.3 : -0.3)))) blocked=true;
+      }
+    }
+    if(!blocked) pos.z=nz; else vel.z=0;
+  }
+  // Y (gravity)
+  let ny = next.y + vel.y*dt;
+  // ground check
+  // if moving down, check feet
+  if(vel.y <= 0){
+    let footBlocked=false;
+    for(let xx of [-0.25,0.25]) for(let zz of [-0.25,0.25]){
+      if(isSolidAt(Math.floor(pos.x+xx), Math.floor(ny-0.1), Math.floor(pos.z+zz))) footBlocked=true;
+    }
+    if(footBlocked){
+      pos.y = Math.floor(ny) + 1.1; // stand on top
+      vel.y = 0;
+      player.onGround=true;
+    } else {
+      pos.y = ny;
+      player.onGround=false;
+    }
+  } else {
+    // moving up — head
+    let headBlocked=false;
+    for(let xx of [-0.25,0.25]) for(let zz of [-0.25,0.25]){
+      if(isSolidAt(Math.floor(pos.x+xx), Math.floor(ny+player.height-0.1), Math.floor(pos.z+zz))) headBlocked=true;
+    }
+    if(headBlocked){ vel.y=0; } else pos.y = ny;
+  }
+  // lava damage
+  const footVox = voxels.get(key(Math.floor(pos.x), Math.floor(pos.y-0.2), Math.floor(pos.z)));
+  if(footVox && footVox.type==='lava'){
+    if(Math.random()<0.02) takeDamage(1);
+  }
+}
+
+function takeDamage(n){
+  health=Math.max(0, health-n);
+  renderHearts();
+  naviTextEl.textContent = health<=3 ? "Careful! You have low hearts — find a heart piece in the grass!" : "Ouch! Try Z-targeting to circle-strafe.";
+  if(health===0){
+    showPrompt("You fell! Respawning…", 2000);
+    setTimeout(()=>{ player.pos.set(0, 4, 0); health=maxHealth; renderHearts(); }, 900);
+  }
+}
+
+// sword
+let swordCooldown=0;
+const swordMesh = new THREE.Group();
+{
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.02,0.9), new THREE.MeshStandardMaterial({color:0xe5e7eb, metalness:0.7, roughness:0.3}));
+  blade.position.set(0,0,0.6);
+  const guard = new THREE.Mesh(new THREE.BoxGeometry(0.25,0.05,0.08), new THREE.MeshStandardMaterial({color:0x3a6ea5}));
+  swordMesh.add(blade, guard);
+  swordMesh.visible=false;
+  // attach to camera later
+}
+scene.add(swordMesh);
+
+function doSword(){
+  if(swordCooldown>0) return;
+  swordCooldown=0.45;
+  swordMesh.visible=true;
+  swordMesh.position.copy(player.pos).add(new THREE.Vector3(0,1.2,0));
+  // damage check
+  const origin = player.pos.clone().add(new THREE.Vector3(0,1.1,0));
+  const forward = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+  // ray-ish slash: check actors in arc
+  const slashRadius=2.6;
+  let hit=false;
+  [octorok, ...skulltulas.map(s=>({mesh:s.mesh, hp:1, radius:0.5, id:'skulltula', attention:true, hostility:false, skull:s}))].forEach(act=>{
+    if(!act) return;
+    const m = act.mesh || act;
+    const dist = m.position.distanceTo(origin);
+    if(dist < slashRadius){
+      // dot check in front
+      const to = m.position.clone().sub(origin).normalize();
+      const dot = to.dot(forward);
+      if(dot > 0.15 || ztarget===act || ztarget===act.skull){
+        hit=true;
+        if(act.id==='octorok'){
+          act.hp--; showPrompt(act.hp>0 ? "Hit! Octorok HP "+act.hp+"/3" : "Octorok defeated! +5 rupees");
+          if(act.hp<=0){ act.mesh.visible=false; act.hp=0; rupees+=5; rupeeCountEl.textContent=rupees; document.getElementById('q2').checked=true; checkWin(); }
+          // knockback
+          act.mesh.position.add(forward.clone().multiplyScalar(1.2));
+          // flash
+          act.mesh.traverse(c=>{ if(c.isMesh) { c.material.emissive?.setHex?.(0xff0000); setTimeout(()=> c.material.emissive?.setHex?.(0x000000), 120); }});
+        } else {
+          // skulltula: break
+          m.scale.set(0.1,0.1,0.1);
+          setTimeout(()=>{ m.visible=false; }, 180);
+          rupees+=2; rupeeCountEl.textContent=rupees;
+          showPrompt("Skulltula splat! Its webs are like Minecraft cobwebs — burn them with sword!");
+          // expose hidden chest?
+        }
+      }
+    }
+  });
+  // slash also breaks webs/leaves in front
+  const breakCandidates = [];
+  voxels.forEach(v=>{
+    if(v.mesh.position.distanceTo(origin) < 2.2){
+      const tp=v.type;
+      if(tp==='leaves' || tp==='stone_cracked'){
+        const to = v.mesh.position.clone().sub(origin).normalize();
+        if(to.dot(forward) > 0.0) breakCandidates.push(v);
+      }
+    }
+  });
+  if(breakCandidates.length){ breakCandidates.slice(0,3).forEach(v=> removeVoxel(v.mesh.userData.x, v.mesh.userData.y, v.mesh.userData.z)); }
+
+  if(!hit) showPrompt("Swoosh! Try Z-targeting an enemy first.");
+  // spin break dirt/grass if charged? demo: mine aoe
+  setTimeout(()=> swordMesh.visible=false, 180);
+}
+
+// hookshot
+let hookActive=null;
+let hookProgress=0;
+function doHookshot(){
+  const sel = HOTBAR[selectedSlot];
+  if(sel.id!=='hookshot'){
+    showPrompt("Equip Hookshot first! (slot 5 / press 5)");
+    return;
+  }
+  // raycast forward to find hookable (chain or actor)
+  const origin = camera.position.clone();
+  const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+  raycaster.set(origin, dir);
+  const hits = raycaster.intersectObjects(voxelMeshes, false);
+  let target=null, hitPos=null;
+  if(hits.length && hits[0].distance < 28){
+    const m=hits[0].object;
+    if(m.userData.type==='chain' || m.userData.type==='obsidian' || m.userData.type==='stone' || m.userData.type==='log'){
+      target=m; hitPos=hits[0].point;
+    } else {
+      // allow any solid but give feedback
+      showPrompt("Hookshot needs a solid hook — try the chains over the ravine!");
+      return;
+    }
+  } else {
+    // check actors
+    let best=null, bestD=999;
+    [octorok, ...skulltulas.map(s=>s.mesh)].forEach(mesh=>{
+      // project
+      const to = mesh.position.clone().sub(origin);
+      const proj = to.dot(dir);
+      if(proj>0 && proj<22){
+        const perp = to.clone().sub(dir.clone().multiplyScalar(proj)).length();
+        if(perp < 1.2 && proj < bestD){ best=mesh; bestD=proj; hitPos=mesh.position.clone(); }
+      }
+    });
+    if(best){ target={isActor:true, mesh:best}; }
+  }
+  if(!target){ showPrompt("No hook point — look at a chain (ravine) or Deku limb!",1500); return; }
+
+  // initiate pull: create visual beam and lerp player toward target
+  hookActive = { target, hitPos: hitPos || target.mesh?.position || target.position, start: player.pos.clone(), dir, time:0, dur:0.55 };
+  hookProgress=0;
+  showPrompt("Hookshot! Pulling…");
+  // also if target is skulltula actor with HOOKSHOT_PULLS_ACTOR, pull it instead
+  if(target.isActor){
+    // pull actor toward player
+    let t=0;
+    const pullInt = setInterval(()=>{
+      t+=0.04;
+      if(t>1 || !target.mesh.visible){ clearInterval(pullInt); return; }
+      target.mesh.position.lerp(player.pos.clone().add(new THREE.Vector3(0,1,0)), 0.12);
+    }, 16);
+    setTimeout(()=> clearInterval(pullInt), 650);
+  }
+}
+
+// bomb
+let bombs=[];
+function placeBomb(){
+  const sel=HOTBAR[selectedSlot];
+  if(sel.id!=='bomb' && HOTBAR[3].id!=='bomb'){ showPrompt("Select Bomb! (slot 4)",1200); return; }
+  const origin = player.pos.clone().add(new THREE.Vector3(0,0.1,0));
+  const fwd = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).multiplyScalar(1.2);
+  const pos = origin.clone().add(fwd);
+  pos.y = Math.max(pos.y, getGroundHeight(pos.x, pos.z)+0.2);
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12,10), new THREE.MeshStandardMaterial({color:0x1f2937}));
+  mesh.position.copy(pos);
+  const fuse = new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.3,6), new THREE.MeshStandardMaterial({color:0xf59e0b, emissive:0xff6b00, emissiveIntensity:0.8}));
+  fuse.position.y=0.25;
+  mesh.add(fuse);
+  scene.add(mesh);
+  let fuseT=1.6;
+  bombs.push({mesh, fuseT, pos, vel: new THREE.Vector3(fwd.x*1.2, 0.6, fwd.z*1.2)});
+  showPrompt("Bomb placed! It powers redstone switches (SWCH) when it explodes.");
+}
+
+function explodeBomb(b){
+  scene.remove(b.mesh);
+  // particle
+  const boom = new THREE.Mesh(new THREE.SphereGeometry(1.9, 14,12), new THREE.MeshStandardMaterial({color:0xff8c42, emissive:0xff3b30, emissiveIntensity:0.6, transparent:true, opacity:0.85}));
+  boom.position.copy(b.mesh.position);
+  scene.add(boom);
+  setTimeout(()=> scene.remove(boom), 280);
+  // break voxels in radius 2.2 (respect unbreakable)
+  const c = b.mesh.position;
+  const toBreak=[];
+  voxels.forEach(v=>{
+    if(v.mesh.position.distanceTo(c) < 2.4){
+      if(v.type==='obsidian'){ /* crack */ } else toBreak.push(v);
+    }
+  });
+  toBreak.forEach(v=> removeVoxel(v.mesh.userData.x, v.mesh.userData.y, v.mesh.userData.z));
+  // actors damage
+  [octorok].forEach(a=>{
+    if(!a.mesh.visible) return;
+    if(a.mesh.position.distanceTo(c) < 3){
+      a.hp=Math.max(0,a.hp-2);
+      if(a.hp===0){ a.mesh.visible=false; rupees+=5; rupeeCountEl.textContent=rupees; document.getElementById('q2').checked=true; checkWin(); }
+      showPrompt("Bomb hit! "+(a.hp? a.hp+" HP left":"defeated!"));
+    }
+  });
+  // redstone trigger: if near redstone block, open gate
+  voxels.forEach(v=>{
+    if(v.type==='redstone' && v.mesh.position.distanceTo(c) < 4){
+      showPrompt("SWCH activated! (Redstone → OoT switch flag)");
+      // open castle gate visual: remove obsidian deco as demo
+      voxels.forEach(v2=>{
+        if(v2.type==='obsidian' && v2.mesh.position.distanceTo(v.mesh.position) < 8){
+          // remove unbreakable temporarily for demo
+          // but keep logic: bomb reveals path
+          worldGroup.remove(v2.mesh); voxels.delete(key(v2.mesh.userData.x,v2.mesh.userData.y,v2.mesh.userData.z));
+        }
+      });
+    }
+  });
+}
+
+// Z-target
+function toggleZTarget(){
+  if(ztarget){
+    ztarget=null;
+    crosshairEl.classList.remove('ztarget');
+    ztargetInfoEl.textContent='none';
+    showPrompt("Z-target released");
+    return;
+  }
+  // find nearest attention entity
+  const origin = player.pos.clone().add(new THREE.Vector3(0,1.1,0));
+  const fwd = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+  let best=null, bestD=1e9, bestScore=-1;
+  const candidates = [
+    octorok,
+    ...skulltulas.map(s=> ({mesh:s.mesh, id:'skulltula', attention:true, hostility:false, radius:0.5})),
+    { mesh: scrub, id:'scrub', attention:true, hostility:false, radius:0.9 }
+  ];
+  candidates.forEach(c=>{
+    if(!c || !c.mesh.visible) return;
+    const to = c.mesh.position.clone().sub(origin);
+    const dist = to.length();
+    if(dist>18) return;
+    const dot = to.normalize().dot(fwd);
+    if(dot < 0.2) return;
+    // score by angle + distance
+    const score = dot*10 - dist*0.2 + (c.hostility?2:0);
+    if(score > bestScore){ bestScore=score; best=c; bestD=dist; }
+  });
+  if(best){
+    ztarget=best;
+    crosshairEl.classList.add('ztarget');
+    ztargetInfoEl.textContent = (best.id||best.mesh?.userData?.type||'actor') + ' ('+bestD.toFixed(1)+'m)';
+    showPrompt("Z-target locked! Strafe to circle · F to swing");
+  } else {
+    showPrompt("No target — look toward the pond's Octorok or Skulltula!");
+  }
+}
+
+// breaking / placing
+let breakCooldown=0, placeCooldown=0;
+function tryBreak(){
+  if(breakCooldown>0 || inventoryOpen) return;
+  const sel = HOTBAR[selectedSlot];
+  // allow break with pick/sword even if not block item
+  const origin = camera.position.clone();
+  const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+  raycaster.set(origin, dir);
+  const hits = raycaster.intersectObjects(voxelMeshes, false);
+  if(!hits.length || hits[0].distance>5.2) { lookInfoEl.textContent='air'; return; }
+  const m=hits[0].object;
+  const {x,y,z,type}=m.userData;
+  const def = BLOCK_TYPES[type];
+  if(def.unbreakable){ showPrompt("That block is unbreakable — Lens of Truth says it needs a key / bomb!"); lookInfoEl.textContent=type+' 🔒'; return; }
+  // pickaxe bonus
+  removeVoxel(x,y,z);
+  breakCooldown=0.14;
+  // haptics
+  m.scale.set(0.95,0.95,0.95); setTimeout(()=> m.scale.set(1,1,1), 60);
+  lookInfoEl.textContent=type;
+  // sword also breaks cracked stone* faster
+  checkQuests();
+}
+function tryPlace(){
+  if(placeCooldown>0 || inventoryOpen) return;
+  const sel = HOTBAR[selectedSlot];
+  if(!sel.block){ showPrompt("Select a placeable: Chain / Dirt (slots 6-7) then RMB",1200); return; }
+  const origin = camera.position.clone();
+  const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+  raycaster.set(origin, dir);
+  const hits = raycaster.intersectObjects(voxelMeshes, false);
+  if(!hits.length || hits[0].distance>5.2) return;
+  const hit=hits[0];
+  const normal = hit.face.normal.clone().applyMatrix3(new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld));
+  // need integer placement: hit pos + normal
+  const pos = hit.point.clone().add(normal.multiplyScalar(0.55));
+  const x=Math.floor(pos.x), y=Math.floor(pos.y), z=Math.floor(pos.z);
+  if(hasVoxel(x,y,z)) return;
+  // don't place inside player
+  if(Math.abs(x - player.pos.x) < 0.6 && Math.abs(z - player.pos.z) < 0.6 && Math.abs(y - player.pos.y) < 1.2) return;
+  addVoxel(x,y,z, sel.block==='chain' ? 'chain' : 'dirt');
+  placeCooldown=0.18;
+  // quest: building over ravine
+  if(sel.block==='dirt' && x>=5 && x<=8 && z>=0 && z<=4){
+    showPrompt("Bridge built! Navi: Hey! You solved it with Minecraft logic!");
+  }
+  checkQuests();
+}
+
+canvas.addEventListener('mousedown', e=>{
+  if(e.button===0) tryBreak();
+  if(e.button===2) tryPlace();
+});
+window.addEventListener('mouseup', e=>{ if(e.button===2) tryPlace(); });
+
+// Inventory overlay (simple)
+let invOverlay=null;
+function toggleInventory(){
+  if(invOverlay){ document.body.removeChild(invOverlay); invOverlay=null; inventoryOpen=false; return; }
+  inventoryOpen=true;
+  invOverlay=document.createElement('div');
+  invOverlay.style.position='fixed'; invOverlay.style.inset='0';
+  invOverlay.style.background='rgba(3,7,12,.78)'; invOverlay.style.backdropFilter='blur(10px)';
+  invOverlay.style.display='grid'; invOverlay.style.placeItems='center'; invOverlay.style.zIndex='20';
+  invOverlay.style.padding='18px';
+  invOverlay.innerHTML=`
+    <div style="background:linear-gradient(180deg,#111821,#0d1218);border:1px solid #2a313a;border-radius:16px;max-width:720px;width:100%;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Inventory — merged</h2>
+        <button class="btn" id="closeInv">Close (E)</button>
+      </div>
+      <p style="color:var(--muted);line-height:1.5;margin:8px 0 0 0">OoT's C-buttons ( Sword / Bow / Hookshot ) now live in Minecraft's hotbar. Rupees = Emeralds. Hearts craft from golden carrots.</p>
+      <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:14px">
+        ${HOTBAR.map((it,i)=>`
+          <div style="background:${i===selectedSlot?'#1a2330':'#0e141c'};border:1px solid ${i===selectedSlot?'#e8c75a':'#26303b'};border-radius:12px;padding:10px;text-align:center;cursor:pointer" onclick="window._sel(${i})">
+            <div style="font-size:24px">${it.icon}</div><div style="font-weight:800;font-size:11px;margin-top:4px">${it.label}</div><div style="color:var(--muted);font-size:10px">${it.id}</div>
+          </div>`).join('')}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+        <div class="card" style="margin:0">
+          <h3>Armor — Tunics</h3>
+          <p>Leather → Kokiri · Iron → Goron (lava) · Chain → Zora (water). Equip via hotbar offhand (hold Shift+RMB).</p>
+        </div>
+        <div class="card" style="margin:0">
+          <h3>Crafting — 3×3</h3>
+          <p>Example: Stick + Flint + Vine = Kokiri Sword. Chain+Iron+Hook+Redstone = Hookshot. Bombchu = Bomb+Redstone.</p>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(invOverlay);
+  invOverlay.querySelector('#closeInv').onclick=toggleInventory;
+  window._sel = (i)=>{ selectSlot(i); toggleInventory(); };
+}
+window.addEventListener('keydown', e=>{ if(e.key.toLowerCase()==='e' && inventoryOpen){ toggleInventory(); e.preventDefault(); }});
+
+// resize
+function onResize(){
+  const rect = document.getElementById('canvasHost').getBoundingClientRect();
+  const w = rect.width, h = rect.height;
+  renderer.setSize(w,h,false);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', onResize);
+
+// main loop
+let last=performance.now(), acc=0, frames=0, fpsT=0;
+const clock=new THREE.Clock();
+
+function updateModePill(){
+  if(thirdPerson<0.2){ modePill.textContent='● Minecraft Mode — First Person'; modePill.style.background='rgba(232,199,90,.14)'; }
+  else if(thirdPerson<0.7){ modePill.textContent='◐ Adventure Mode — Over-shoulder'; }
+  else { modePill.textContent='● Zelda Mode — Third Person (Z-target ready)'; modePill.style.background='rgba(88,166,255,.18)'; }
+}
+
+function handleMovement(dt){
+  // yaw/pitch from mouse
+  const sens=0.0026;
+  player.yaw -= mouseDX * sens;
+  player.pitch -= mouseDY * sens;
+  player.pitch = Math.max(-1.35, Math.min(1.35, player.pitch));
+  mouseDX=0; mouseDY=0;
+
+  // move vector
+  const forward = new THREE.Vector3(Math.sin(player.yaw),0, -Math.cos(player.yaw));
+  const right = new THREE.Vector3(Math.cos(player.yaw),0, Math.sin(player.yaw));
+  let move = new THREE.Vector3();
+  if(keys['w']) move.add(forward);
+  if(keys['s']) move.sub(forward);
+  if(keys['a']) move.sub(right);
+  if(keys['d']) move.add(right);
+  const sprint = keys['shift'];
+  const speed = sprint ? player.sprint : player.speed;
+  if(move.length()>0) move.normalize().multiplyScalar(speed);
+
+  // z-target strafe override: when locked, move is relative to target
+  if(ztarget && ztarget.mesh.visible){
+    const toT = ztarget.mesh.position.clone().sub(player.pos);
+    const dist = toT.length();
+    if(dist>18){ // break
+      ztarget=null; crosshairEl.classList.remove('ztarget'); ztargetInfoEl.textContent='none';
+    }
+  }
+
+  // apply XZ velocity
+  player.vel.x = move.x;
+  player.vel.z = move.z;
+
+  // jump
+  if(keys[' '] && player.onGround){
+    player.vel.y = 5.4;
+    player.onGround=false;
+  }
+  // roll if sprint+forward double tap could be dash — simple: shift gives dash impulse
+  if(sprint && move.length() && player.onGround && Math.random()<0.004){
+    // dust
+  }
+
+  // gravity
+  player.vel.y -= 16.5 * dt; // minecraft-ish
+  if(player.vel.y < -14) player.vel.y = -14;
+
+  // hookshot overrides movement
+  if(hookActive){
+    hookActive.time += dt;
+    const p = Math.min(1, hookActive.time/hookActive.dur);
+    const ease = 1 - Math.pow(1-p,3);
+    player.pos.lerpVectors(hookActive.start, hookActive.hitPos.clone().add(new THREE.Vector3(0,0.6,0)).sub(hookActive.start).normalize().multiplyScalar(-1).add(hookActive.hitPos), ease);
+    // Actually lerp to target
+    player.pos.lerpVectors(hookActive.start, hookActive.hitPos.clone().sub(new THREE.Vector3(0,0.4,0)), ease);
+    player.vel.y=0;
+    if(p>=1){ hookActive=null; player.vel.set(0,0,0); showPrompt("Hookshot done! Place blocks to secure path."); }
+  } else {
+    collideAndSlide(player.pos, player.vel, dt);
+  }
+
+  // clamp world
+  player.pos.y = Math.max(player.pos.y, -2);
+  if(player.pos.y < -4) { takeDamage(2); player.pos.set(0,4,0); }
+}
+
+function updateCamera(){
+  // lerp thirdPerson
+  cameraLerp += (thirdPerson - cameraLerp) * 0.08;
+  const isThird = cameraLerp>0.25;
+
+  // base camera at eyes
+  const eye = player.pos.clone().add(new THREE.Vector3(0,1.55,0));
+  let camPos = eye.clone();
+  let lookAt = eye.clone().add(new THREE.Vector3(0,0,-1).applyQuaternion(new THREE.Quaternion().setFromEuler(new THREE.Euler(player.pitch, player.yaw, 0, 'YXZ'))).multiplyScalar(8));
+
+  // Z-target: look at target
+  if(ztarget && ztarget.mesh.visible){
+    lookAt = ztarget.mesh.position.clone().add(new THREE.Vector3(0,0.4,0));
+    // slightly orbit camera
+    const toPlayer = player.pos.clone().sub(ztarget.mesh.position);
+    toPlayer.y=0; toPlayer.normalize().multiplyScalar(4 + cameraLerp*3);
+    camPos = ztarget.mesh.position.clone().add(toPlayer).add(new THREE.Vector3(0, 1.8 + cameraLerp, 0));
+    // if not third, keep first but look at target
+  }
+
+  // third-person offset back
+  if(isThird){
+    const back = new THREE.Vector3(0,0,1).applyQuaternion(new THREE.Quaternion().setFromEuler(new THREE.Euler(player.pitch*0.35, player.yaw, 0, 'YXZ'))).multiplyScalar(3.2 + cameraLerp*2.5);
+    camPos = eye.clone().add(back);
+    camPos.y += 0.9;
+    // avoid clipping into ground: raycast back
+    const dir = camPos.clone().sub(eye).normalize();
+    const dist = camPos.distanceTo(eye);
+    raycaster.set(eye, dir);
+    const hits = raycaster.intersectObjects(voxelMeshes, false);
+    if(hits.length && hits[0].distance < dist){
+      camPos = eye.clone().add(dir.multiplyScalar(hits[0].distance - 0.25));
+    }
+  }
+
+  camera.position.copy(camPos);
+  camera.lookAt(lookAt);
+  // sword follows
+  if(swordMesh.visible){
+    const fwd = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+    const side = new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion);
+    swordMesh.position.copy(eye.clone().add(fwd.clone().multiplyScalar(0.65)).add(side.clone().multiplyScalar(0.35)));
+    swordMesh.quaternion.copy(camera.quaternion);
+    swordMesh.rotateX(0.9);
+    // swing anim
+    swordMesh.rotateZ(Math.sin(performance.now()*0.04)*0.6);
+  }
+}
+
+function animateNavi(){
+  const t=performance.now()*0.001;
+  navi.position.set(
+    player.pos.x + Math.sin(t*0.9)*1.1,
+    player.pos.y + 1.9 + Math.sin(t*1.7)*0.25,
+    player.pos.z + Math.cos(t*0.8)*1.0
+  );
+  navi.rotation.y += 0.02;
+  // point at nearest interesting
+  // skulls bob
+  skulltulas.forEach(s=>{
+    s.mesh.position.y = 3.2 + Math.sin(t*1.2 + s.mesh.userData.bob)*0.22;
+    s.mesh.rotation.y += 0.008;
+  });
+  octorok.mesh.position.y = octorok.baseY + Math.sin(t*1.5)*0.07;
+  scrub.rotation.y = Math.sin(t*0.5)*0.25;
+}
+
+function tick(dt){
+  handleMovement(dt);
+  updateCamera();
+  animateNavi();
+  // cooldowns
+  if(breakCooldown>0) breakCooldown-=dt;
+  if(placeCooldown>0) placeCooldown-=dt;
+  if(swordCooldown>0) swordCooldown-=dt;
+  // bombs
+  bombs.forEach(b=>{
+    b.fuseT -= dt;
+    b.mesh.position.add(b.vel.clone().multiplyScalar(dt));
+    b.vel.y -= 14*dt;
+    // ground collide
+    const below = isSolidAt(Math.floor(b.mesh.position.x), Math.floor(b.mesh.position.y-0.25), Math.floor(b.mesh.position.z));
+    if(below && b.vel.y<0){ b.vel.y=0; b.vel.x*=0.92; b.vel.z*=0.92; }
+    b.mesh.rotation.y += dt*4;
+    // collide slide
+    if(b.fuseT<=0){
+      explodeBomb(b);
+      b.dead=true;
+    }
+  });
+  bombs = bombs.filter(b=>!b.dead);
+  // prompt timer
+  if(promptTimer>0){ promptTimer-=dt*1000; if(promptTimer<=0) promptEl.classList.remove('show'); }
+  // ui counters
+  posInfoEl.textContent = `${player.pos.x.toFixed(1)}, ${player.pos.y.toFixed(1)}, ${player.pos.z.toFixed(1)}`;
+  viewModeEl.textContent = thirdPerson<0.2 ? 'First-person (MC)' : thirdPerson<0.7 ? 'Over-shoulder' : 'Third-person (Zelda)';
+  // ray looking at
+  const origin=camera.position.clone(); const dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+  raycaster.set(origin, dir);
+  const hits=raycaster.intersectObjects(voxelMeshes,false);
+  if(hits.length && hits[0].distance<5.5){
+    lookInfoEl.textContent = hits[0].object.userData.type + ` (${hits[0].object.userData.x},${hits[0].object.userData.y},${hits[0].object.userData.z})`;
+  } else if(ztarget){ lookInfoEl.textContent='locked: '+ (ztarget.id||'actor'); } else { lookInfoEl.textContent='air'; }
+  // hearts regen very slow near fairy
+  if(navi.position.distanceTo(player.pos) < 2 && Math.random()<0.002 && health<maxHealth){ health++; renderHearts(); }
+  // pops
+  pops.forEach(p=>{
+    p.life+=dt;
+    p.y += p.vy*dt;
+    p.el.style.transform=`translate(-50%, -60%) translateY(${-p.life*28}px)`;
+    p.el.style.opacity= `${1-p.life}`;
+  });
+  for(let i=pops.length-1;i>=0;i--) if(pops[i].life>1){ pops[i].el.remove(); pops.splice(i,1); }
+  // quests hints
+  if(!window._h1 && player.pos.distanceTo(new THREE.Vector3(0,2,14))<6 && blocksMined<1){
+    window._h1=true; naviTextEl.textContent='That Deku Tree is sick — its roots are cracked stone! Hit them with your sword or bomb, then check behind.';
+  }
+}
+
+function checkQuests(){
+  const q1=document.getElementById('q1'), q2=document.getElementById('q2'), q3=document.getElementById('q3');
+  // q1: 3 root blocks broken
+  let rootsBroken=0;
+  [[1,1,16],[ -1,1,16],[0,1,17]].forEach(([x,y,z])=>{ if(!hasVoxel(x,y,z)) rootsBroken++; });
+  if(rootsBroken>=2) q1.checked=true;
+  // q2 handled on kills
+  // q3: bridge over ravine
+  let bridge=false;
+  for(let z=-1; z<4; z++) if(hasVoxel(6,2,z) || hasVoxel(7,2,z)) bridge=true;
+  if(bridge) q3.checked=true;
+  checkWin();
+}
+function checkWin(){
+  const q1=document.getElementById('q1').checked, q2=document.getElementById('q2').checked, q3=document.getElementById('q3').checked;
+  if(q1&&q2&&q3 && !window._won){
+    window._won=true;
+    showPrompt("All quests done! You beat the demo — now read the docs to build the real merge!", 5000);
+    naviTextEl.textContent="We did it! You mixed mining, Z-targeting, and building — that's Hyrulecraft. See docs/ for how to wire real decomps!";
+  }
+}
+
+// loop
+let lastTime=performance.now();
+function loop(){
+  const now=performance.now();
+  const dt=Math.min(0.033, (now-lastTime)/1000);
+  lastTime=now;
+  tick(dt);
+  renderer.render(scene,camera);
+  frames++; if(now - fpsT > 500){ fpsEl.textContent = Math.round(frames*1000/(now-fpsT)) + ' FPS'; frames=0; fpsT=now; }
+  requestAnimationFrame(loop);
+}
+
+// start
+function startGame(){
+  document.getElementById('startOverlay').style.display='none';
+  canvas.requestPointerLock?.();
+  onResize();
+}
+document.getElementById('playBtn').onclick=startGame;
+document.getElementById('startBtn2').onclick=startGame;
+document.getElementById('resetBtn').onclick=()=>{ player.pos.set(0,4,0); player.vel.set(0,0,0); health=maxHealth; renderHearts(); showPrompt("Respawned at Kokiri stump"); };
+document.addEventListener('keydown', e=>{ if(e.key==='m' || e.key==='M'){ document.querySelector('[data-tab="merge"]').click(); }});
+
+// tabs
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('pane-'+btn.dataset.tab).classList.add('active');
+  };
+});
+
+// merge list data
+const mergeEntries = [
+  { from:'Minecraft: grass_block + En_Kusa', to:'Hyrule grass → breaks give rupees', compat:'Z-target grass?' },
+  { from:'OoT: Bg_Bombwall', to:'Minecraft: cobblestone (cracked)', compat:'Bomb breaks' },
+  { from:'OoT: Hookshot (ACTOR_FLAG_HOOKSHOT_ATTACHED)', to:'Minecraft: chain + crossbow ray', compat:'Hook pulls player' },
+  { from:'OoT: SWCH flags', to:'Minecraft: redstone power 0-15', compat:'Redstone = switch' },
+  { from:'OoT: Chest (En_Box, TREASURE)', to:'Minecraft: chest + loot table', compat:'Shared open flag' },
+  { from:'Minecraft: Creeper fuse', to:'OoT: Bomb flower (2s)', compat:'Pickup & throw' },
+  { from:'OoT: Camera (CAM_MODE_ZTARGET)', to:'Minecraft: third-person lerp', compat:'Scroll to switch' },
+  { from:'OoT: Heart Piece (4)', to:'Minecraft: golden carrot + enchant glow', compat:'+1 max heart' },
+];
+mergeEntries.forEach(e=>{
+  const row=document.createElement('div');
+  row.className='mergeRow';
+  row.innerHTML=`<div class="from"><b style="font-size:12px">${e.from}</b></div><div class="arrow">→</div><div class="to"><b style="font-size:12px">${e.to}</b></div><span class="compat">${e.compat}</span>`;
+  mergeListEl.appendChild(row);
+});
+
+onResize();
+renderHearts();
+updateModePill();
+requestAnimationFrame(loop);
+
+// initial prompt loop
+setTimeout(()=> showPrompt("Click to lock mouse — then try mining the cracked stone at the Deku Tree (south)!", 3500), 800);
+
+// handle losing pointer lock
+setInterval(()=>{
+  if(isLocked) promptEl.style.bottom='72px';
+},500);
+
+</script>
+</body>
+</html>

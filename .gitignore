@@ -1,0 +1,25 @@
+# Real decomp / assets — must not be committed
+baseroms/
+extracted/
+build/
+expected/
+.venv/
+baserom*.z64
+*.n64
+*.z64
+mc_src/
+*.jar
+/tmp/
+
+# engine build artifacts
+engine/dist/
+engine/node_modules/
+
+# os
+.DS_Store
+Thumbs.db
+
+# speculative
+*.o
+*.a
+*.elf

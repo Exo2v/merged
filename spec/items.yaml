@@ -1,0 +1,197 @@
+# Merged item registry — 42 items
+# Each entry: id (oot+mc), type, stack, zTarget, minecraft recipe → oot effect
+
+items:
+  - id: kokiri_sword
+    display: "Kokiri Sword"
+    oot: ITEM_SWORD_KOKIRI
+    mc: minecraft:wooden_sword
+    recipe: ["stick + flint + vine", "or chest Kokiri Forest"]
+    damage: 3
+    flags: [ATTENTION_ENABLED]
+    note: "First sword; retextured wooden sword. Spin attack mines dirt."
+
+  - id: master_sword
+    display: "Master Sword"
+    oot: ITEM_SWORD_MASTER
+    mc: minecraft:iron_sword
+    recipe: ["nether_star + kokiri_sword on time pedestal"]
+    damage: 8
+    flags: [ATTENTION_ENABLED, HOSTILE]
+    effect: "Glows near Ganon-corrupted chunks (sculk sensor). Breaks skulltula webs."
+
+  - id: hookshot
+    display: "Hookshot"
+    oot: ITEM_HOOKSHOT
+    mc: minecraft:crossbow # base
+    recipe: ["chain x2 + iron_ingot + hook + redstone"]
+    range: 15
+    flags: [HOOKSHOT_PULLS_PLAYER, ATTENTION_ENABLED]
+    effect: "Raycasts voxels + actors; pulls player if target is IMMOVABLE."
+
+  - id: longshot
+    display: "Longshot"
+    oot: ITEM_LONGSHOT
+    mc: minecraft:crossbow
+    recipe: ["hookshot + gold_ingot + rupee(emerald)"]
+    range: 30
+
+  - id: fairy_bow
+    display: "Fairy Bow"
+    oot: ITEM_BOW
+    mc: minecraft:bow
+    recipe: ["3x stick + 3x string + 1x emerald"]
+    ammo: ["deku_seed -> arrow", "bombchu -> tnt_arrow"]
+
+  - id: bomb
+    display: "Bomb"
+    oot: ITEM_BOMB
+    mc: minecraft:tnt
+    recipe: ["gunpowder x4 + rupee"]
+    blast: 4
+    flags: [CAN_ATTACH_TO_ARROW]
+    effect: "Fuse 2s; sets SWCH flags + breaks stone. Pick up lit Creeper = same."
+
+  - id: bombchu
+    display: "Bombchu"
+    oot: ITEM_BOMBCHU
+    mc: minecraft:tnt
+    recipe: ["bomb + redstone + iron_nugget"]
+    effect: "Wall-climbing explosive; triggers redstone as it runs."
+
+  - id: boomerang
+    display: "Boomerang"
+    oot: ITEM_BOOMERANG
+    mc: minecraft:trident
+    recipe: ["2x stick + 1x vine + 1x emerald"]
+    effect: "Lock-on multi-target; stuns. Returns if hits voxel."
+
+  - id: slingshot
+    display: "Deku Slingshot"
+    oot: ITEM_SLINGSHOT
+    mc: minecraft:crossbow
+    recipe: ["stick + string + leather"]
+    ammo: "deku_seed"
+
+  - id: ocarina
+    display: "Ocarina of Time"
+    oot: ITEM_OCARINA_TIME
+    mc: minecraft:goat_horn
+    recipe: ["clay + 5x note_block on pedestal"]
+    songs: ["zelda_lullaby", "sarias_song", "suns_song", "song_of_time", "song_of_storms", "eponas_song", "song_of_scarecrow"]
+
+  - id: deku_stick
+    display: "Deku Stick"
+    oot: ITEM_STICK
+    mc: minecraft:stick
+    effect: "Burns; lights torches. 2x break speed on webs."
+
+  - id: deku_nut
+    display: "Deku Nut"
+    oot: ITEM_NUT
+    mc: minecraft:ender_pearl
+    effect: "Flash stun (2s) + brief levitation."
+
+  - id: hylian_shield
+    display: "Hylian Shield"
+    oot: ITEM_SHIELD_HYLIAN
+    mc: minecraft:shield
+    defense: 5
+
+  - id: mirror_shield
+    display: "Mirror Shield"
+    oot: ITEM_SHIELD_MIRROR
+    mc: minecraft:shield
+    effect: "Reflects light puzzles + guardian beams."
+
+  - id: goron_tunic
+    display: "Goron Tunic"
+    oot: ITEM_TUNIC_GORON
+    mc: minecraft:iron_chestplate
+    effect: "Fire resist + lava swim (1 heart/2s without)."
+
+  - id: zora_tunic
+    display: "Zora Tunic"
+    oot: ITEM_TUNIC_ZORA
+    mc: minecraft:chainmail_chestplate
+    effect: "Water breathing; sink control with iron boots."
+
+  - id: iron_boots
+    display: "Iron Boots"
+    oot: ITEM_BOOTS_IRON
+    mc: minecraft:iron_boots
+    effect: "Sink in water; heavy press switches."
+
+  - id: hover_boots
+    display: "Hover Boots"
+    oot: ITEM_BOOTS_HOVER
+    mc: minecraft:leather_boots
+    effect: "No fall damage; walk over 1-block gaps briefly."
+
+  - id: lens_of_truth
+    display: "Lens of Truth"
+    oot: ITEM_LENS
+    mc: minecraft:spyglass
+    effect: "Reveals breakable vs unbreakable voxels + invisible poly."
+
+  - id: bottle
+    display: "Bottle"
+    oot: ITEM_BOTTLE
+    mc: minecraft:glass_bottle
+    capture: ["fairy", "potion", "bugs", "poe", "lon_lon_milk"]
+
+  - id: rupee_green
+    display: "Rupee (Green)"
+    oot: ITEM_RUPEE_GREEN
+    mc: minecraft:emerald
+    value: 1
+    note: "Rupee == Emerald in all trades."
+
+  - id: heart_container
+    display: "Heart Container"
+    oot: ITEM_HEART_CONTAINER
+    mc: minecraft:golden_apple
+    effect: "+1 max heart (to 20)."
+
+  - id: heart_piece
+    display: "Piece of Heart"
+    oot: ITEM_HEART_PIECE
+    mc: minecraft:golden_carrot
+    collect: 4
+
+  - id: skulltula_token
+    display: "Gold Skulltula Token"
+    oot: ITEM_SKULL_TOKEN
+    mc: minecraft:spider_eye
+    effect: "Skulltula enemy drops; 10 → wallet upgrade."
+
+  - id: stone_of_agony
+    display: "Stone of Agony"
+    oot: ITEM_STONE_OF_AGONY
+    mc: minecraft:sculk_sensor
+    effect: "Rumbles near hidden grotto (voxel cave)."
+
+songs:
+  - id: zelda_lullaby
+    notes: "CLeft CUp CRight CLeft CUp CRight"
+    effect: "Opens lullaby doors + grows crops."
+
+  - id: suns_song
+    notes: "CRight CDown CUp CRight CDown CUp"
+    effect: "Noon/midnight toggle."
+
+  - id: song_of_time
+    notes: "CRight A CDown CRight A CDown"
+    effect: "Rewinds last 5 mined blocks in room."
+
+  - id: eponas_song
+    notes: "CUp CLeft CRight CUp CLeft CRight"
+    effect: "Summons Epona (horse) from stable data."
+
+  - id: song_of_storms
+    notes: "A CDown CUp A CDown CUp"
+    effect: "Rain + washes sand → reveals chests."
+
+  - id: sarias_song
+    notes: "CDown CRight CLeft CDown CRight CLeft"
+    effect: "Talk to Navi anywhere; reveals Saria's grove map."

@@ -1,0 +1,109 @@
+# Block ↔ collision/actor mapping
+# OoT side: Bg* actors + CollisionPoly types. MC side: blockstate.
+
+voxel_pallete:
+  - mc: minecraft:air
+    oot_collision: NONE
+    breakable: false
+    note: "Empty; OoT poly fallback."
+
+  - mc: minecraft:grass_block
+    oot_collision: GROUND
+    oot_actor: En_Kusa  # grass clump
+    breakable: true
+    drop: "rupee_green 10% or heart"
+    tool: "any"
+
+  - mc: minecraft:dirt
+    oot_collision: GROUND
+    breakable: true
+    tool: "shovel"
+
+  - mc: minecraft:stone
+    oot_collision: GROUND
+    breakable: true
+    tool: "pickaxe"
+
+  - mc: minecraft:oak_log
+    oot_collision: WOOD
+    oot_actor: Bg_Hidan_Kousi
+    breakable: true
+    tool: "axe"
+
+  - mc: minecraft:cobblestone
+    oot_collision: GROUND
+    breakable: true
+    unbreakable_in_dungeon: true # crack indicates breakable
+    tag: "dungeon:allow_break=false unless cracked"
+
+  - mc: minecraft:lava
+    oot_collision: LAVA
+    oot_actor: Bg_Hidan_Hrock # lava rock
+    damage: 4
+    tunic: "goron_tunic negates"
+
+  - mc: minecraft:water
+    oot_collision: WATER
+    needs: "zora_tunic or iron_boots sinking"
+
+  - mc: minecraft:obsidian
+    oot_collision: UNBREAKABLE
+    oot_actor: Bg_Heavy_Block
+    breakable: false
+    note: "Boss door frame; only Goron Bracelet + hammer."
+
+  - mc: minecraft:chest
+    oot_collision: WOOD
+    oot_actor: En_Box # treasure chest
+    interact: "Z-target + A; respects TREASURE flag."
+
+  - mc: minecraft:redstone_block
+    oot_collision: METAL
+    oot_flag: "SWCH"
+    effect: "Powering sets room switch flag; Link can step on pressure plate = same circuit."
+
+  - mc: minecraft:iron_door
+    oot_collision: METAL
+    oot_actor: Bg_Gate_Shutter
+    interact: "Needs small key / boss key item in inventory_bridge."
+
+  - mc: minecraft:web
+    oot_collision: SOFT
+    oot_actor: Bg_Spot06_Objects # skulltula web
+    breakable: true
+    tool: "sword or deku_stick fire"
+
+  - mc: minecraft:chain
+    oot_collision: HOOKSHOT
+    flag: "HOOKSHOT_PULLS_PLAYER"
+    note: "Hookshot target; chain block."
+
+  - mc: minecraft:sculk_sensor
+    oot_collision: GROUND
+    oot_actor: Bg_Haka_Megane # hidden
+    flag: "REACT_TO_LENS"
+    effect: "Lens reveals; Stone of Agony proxy."
+
+room_templates:
+  kokiri_forest:
+    biome: "minecraft:forest"
+    fill: "minecraft:oak_log / leaves as Bg_Spot00"
+    actors: ["En_Kusa x20", "En_Deku_Scrub", "Obj_Mure grass spawner → grass_block spawner"]
+
+  deku_tree_entrance:
+    biome: "minecraft:lush_caves"
+    fill: "moss_block, rooted_dirt"
+    actors: ["Bg_Ddan_Kd door", "En_Gohma spawn after 3 rooms"]
+
+  hyrule_field:
+    biome: "minecraft:plains"
+    size_blocks: "2048x2048"
+    actors: ["En_Stalchild night", "En_Horse + Epona stable", "Bg_Gjyo_Bridge → drawbridge"]
+
+  dodongos_cavern:
+    biome: "minecraft:basalt_deltas"
+    actors: ["Bg_Dodoago", "Bg_Bombwall (breakable cobble)", "En_Dodongo"]
+
+  water_temple:
+    biome: "minecraft:river (waterlogged)"
+    mechanic: "water_level flag = 0/1/2; placing/breaking iron_block at control changes level"
