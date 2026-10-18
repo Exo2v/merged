@@ -1,0 +1,15 @@
+{
+  "name": "hyrulecraft:castle_ruins/start",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "hyrulecraft:castle_ruins/gate",
+        "processors": "hyrulecraft:castle_ruins_decor",
+        "projection": "terrain_matching"
+      }
+    }
+  ]
+}

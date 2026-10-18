@@ -1,0 +1,9 @@
+{
+  "name": "hyrulecraft:kokiri_grove/start",
+  "fallback": "minecraft:empty",
+  "elements": [
+    { "weight": 3, "element": { "element_type": "minecraft:single_pool_element", "location": "hyrulecraft:kokiri_grove/hut_1", "processors": "minecraft:empty", "projection": "rigid" } },
+    { "weight": 2, "element": { "element_type": "minecraft:single_pool_element", "location": "hyrulecraft:kokiri_grove/hut_2", "processors": "minecraft:empty", "projection": "rigid" } },
+    { "weight": 1, "element": { "element_type": "minecraft:single_pool_element", "location": "hyrulecraft:kokiri_grove/lost_woods_gate", "processors": "minecraft:empty", "projection": "rigid" } }
+  ]
+}

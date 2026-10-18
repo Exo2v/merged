@@ -1,0 +1,4 @@
+{
+  "placement": { "type": "minecraft:random_spread", "spacing": 28, "separation": 12, "salt": 420421 },
+  "structures": [{ "structure": "hyrulecraft:castle_ruins", "weight": 1 }]
+}

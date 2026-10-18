@@ -1,0 +1,7 @@
+{
+  "pack": {
+    "pack_format": 34,
+    "description": "Hyrulecraft — Iris/Oculus shader pack (OoT fog + Lens of Truth + Z-target). Requires Iris 1.8+ on Fabric/NeoForge.",
+    "supported_formats": { "min_inclusive": 34, "max_inclusive": 34 }
+  }
+}

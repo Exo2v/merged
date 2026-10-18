@@ -1,0 +1,15 @@
+{
+  "name": "hyrulecraft:dodongo_cavern/start",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "hyrulecraft:dodongo_cavern/entrance",
+        "processors": "hyrulecraft:dodongo_cavern_decor",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

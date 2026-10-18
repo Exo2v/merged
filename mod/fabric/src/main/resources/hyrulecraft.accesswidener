@@ -1,0 +1,3 @@
+accessWidener	v1	named
+# Allow camera lerp tweaks (if needed for Z-target orbit)
+accessible field net/minecraft/client/render/Camera focusedEntity Lnet/minecraft/entity/Entity;

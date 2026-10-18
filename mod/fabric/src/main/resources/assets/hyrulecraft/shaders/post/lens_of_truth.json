@@ -1,0 +1,5 @@
+{
+  "program": "hyrulecraft:lens_of_truth",
+  "inputs": ["minecraft:main"],
+  "output": "minecraft:main"
+}

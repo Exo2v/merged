@@ -1,0 +1,15 @@
+{
+  "name": "hyrulecraft:deku_tree/start",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "hyrulecraft:deku_tree/stump",
+        "processors": "hyrulecraft:deku_tree_decor",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

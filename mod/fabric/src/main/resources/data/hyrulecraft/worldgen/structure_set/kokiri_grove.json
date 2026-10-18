@@ -1,0 +1,4 @@
+{
+  "placement": { "type": "minecraft:random_spread", "spacing": 16, "separation": 8, "salt": 420423 },
+  "structures": [{ "structure": "hyrulecraft:kokiri_grove", "weight": 1 }]
+}

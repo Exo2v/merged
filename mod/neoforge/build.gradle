@@ -1,0 +1,35 @@
+plugins {
+    id 'java-library'
+    id 'eclipse'
+    id 'idea'
+    id 'net.neoforged.gradle.userdev' version '7.0.163'
+}
+
+version = '0.2.0-1.21.1-neoforge'
+group = 'com.hyrulecraft'
+archivesBaseName = 'hyrulecraft-neoforge'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+println "NeoForge 1.21.1 — Hyrulecraft port. Shares logic from mod/fabric/src/main/java."
+
+repositories {
+    maven { url 'https://maven.neoforged.net/releases' }
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.21.1'
+    // copy common sources: reuse Fabric systems verbatim where API matches
+    copyIdeResources = true
+}
+
+dependencies {
+    implementation "net.neoforged:neoforge:21.1.128"
+    // Pull Fabric API? No — use NeoForge events directly.
+}
+
+tasks.named('processResources', Copy).configure {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+sourceSets.main.resources.srcDir 'src/main/resources'
