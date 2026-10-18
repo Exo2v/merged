@@ -1,0 +1,4 @@
+{
+  "replace": false,
+  "values": ["hyrulecraft:hook_target", "minecraft:chain", "minecraft:oak_log", "minecraft:oak_wood", "minecraft:stripped_oak_log"]
+}

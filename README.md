@@ -15,7 +15,7 @@ You can't ship Nintendo/Mojang assets, so this project does **not** embed either
 
 ---
 
-### ▶ Play the prototype
+### ▶ Play the prototype (web)
 
 ```bash
 python3 -m http.server 8000 --bind 0.0.0.0
@@ -25,6 +25,20 @@ python3 -m http.server 8000 --bind 0.0.0.0
 Or after `git push`, use the preview URL.
 
 **Controls:** `WASD` move, `Mouse` look (click to lock), `Space` jump, `Shift` sprint, `LMB` break, `RMB` place, `Q/E` hotbar, `F` sword, `R` hookshot, `Z` Z-target, `B` bombs, `E` inventory, `1` pick / Minecraft mode.
+
+### ▶ Playable Fabric mod (Minecraft as host — your pick)
+
+You chose **Fabric as host**. The full mod is in [`mod/fabric/`](mod/fabric/):
+
+```bash
+cd mod/fabric
+./gradlew build        # JDK 17 → build/libs/hyrulecraft-0.1.0-alpha.jar
+./gradlew runClient    # dev client
+```
+
+Then drop the jar (+ Fabric API) in `mods/` and launch 1.20.1 with Fabric Loader 0.15.7.
+
+**Mod controls:** `Z` Z-target lock, `R` hookshot, `O` ocarina (hold + arrows), `N` Navi hint, `F` hold for sword spin. See [`mod/fabric/README.md`](mod/fabric/README.md).
 
 ### What is merged?
 
@@ -37,10 +51,13 @@ Or after `git push`, use the preview URL.
 | First-person | Z-target third-person | Seamless toggle (scroll = zoom) |
 | Generated biomes | Handcrafted scenes/rooms | **Voxel Hyrule Field** + handplaced dungeons |
 
-### Repo layout
+### Repo layout (now with Fabric)
 
 ```
 /
+├── mod/fabric/        # ★ Fabric mod — Minecraft as host (your pick)
+│   ├── src/main/java/com/hyrulecraft/{item,block,entity,system,client}
+│   └── build.gradle — loom 1.6, MC 1.20.1, Yarn 10
 ├── engine/              # playable Three.js prototype (no build step)
 │   ├── index.html
 │   └── js/

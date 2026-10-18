@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "hyrulecraft",
+  "version": "${version}",
+  "name": "Hyrulecraft",
+  "description": "Minecraft x Ocarina of Time — Z-target, hookshot, ocarina, deku dungeons, and Navi, inside Fabric.",
+  "authors": ["Exo2v"],
+  "contact": {
+    "homepage": "https://github.com/Exo2v/merged",
+    "sources": "https://github.com/Exo2v/merged",
+    "issues": "https://github.com/Exo2v/merged/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/hyrulecraft/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.hyrulecraft.Hyrulecraft"],
+    "client": ["com.hyrulecraft.client.HyrulecraftClient"]
+  },
+  "mixins": [
+    "hyrulecraft.mixins.json",
+    {
+      "config": "hyrulecraft.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.14.22",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}",
+    "java": ">=17"
+  }
+}

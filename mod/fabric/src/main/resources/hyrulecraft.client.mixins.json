@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.hyrulecraft.mixin.client",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "hyrulecraft.refmap.json",
+  "client": [
+    "CameraMixin",
+    "GameRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

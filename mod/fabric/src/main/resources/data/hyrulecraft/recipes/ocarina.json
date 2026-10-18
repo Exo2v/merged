@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" N ", "NBN", " N "],
+  "key": {
+    "N": {"item": "minecraft:note_block"},
+    "B": {"item": "minecraft:clay_ball"}
+  },
+  "result": {"item": "hyrulecraft:ocarina", "count": 1}
+}
